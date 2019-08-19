@@ -6,7 +6,12 @@ const initialFormState = {
   task_name: ''
 };
 
-const TodoForm = ({ onSubmit, preFilledFormState = {} }) => {
+const TodoForm = ({
+  onSubmit,
+  isEditing = false,
+  preFilledFormState = {},
+  onCancelEdit = () => {}
+}) => {
   const [formValues, setFormValues] = React.useState({
     ...initialFormState,
     ...preFilledFormState
@@ -14,14 +19,10 @@ const TodoForm = ({ onSubmit, preFilledFormState = {} }) => {
   const inputRef = React.useRef(null);
 
   React.useEffect(() => {
-    if (preFilledFormState === null) {
-      return;
-    }
-
-    if (Object.values(preFilledFormState).length > 0) {
+    if (isEditing) {
       inputRef.current.focus();
     }
-  }, [preFilledFormState]);
+  }, [isEditing]);
 
   const handleSubmit = event => {
     event.preventDefault();
@@ -51,7 +52,20 @@ const TodoForm = ({ onSubmit, preFilledFormState = {} }) => {
           />
         </Grid>
 
-        <Grid item xs={12}>
+        {isEditing && (
+          <Grid item xs={12} md={6}>
+            <Button
+              variant="contained"
+              color="default"
+              onClick={onCancelEdit}
+              fullWidth
+            >
+              Cancel edit
+            </Button>
+          </Grid>
+        )}
+
+        <Grid item xs={12} md={isEditing && 6}>
           <Button variant="contained" color="primary" type="submit" fullWidth>
             Save task
           </Button>
@@ -63,6 +77,8 @@ const TodoForm = ({ onSubmit, preFilledFormState = {} }) => {
 
 TodoForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
+  onCancelEdit: PropTypes.func,
+  isEditing: PropTypes.bool,
   preFilledFormState: PropTypes.object
 };
 

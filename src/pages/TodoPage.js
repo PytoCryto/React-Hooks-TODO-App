@@ -2,6 +2,18 @@ import React from 'react';
 import { Container, Grid, Paper, makeStyles } from '@material-ui/core';
 import TodoForm from '../components/Todo/TodoForm';
 import TodoList from '../components/Todo/TodoList';
+import TodoReducer from '../reducers/Todo';
+import { addTodo, updateTodo, removeTodo, toggleTodo } from '../actions/Todo';
+
+const initialState = [
+  { id: 0, task_name: 'Wash the car', isCompleted: false },
+  {
+    id: 1,
+    task_name: 'Commit ALT F4',
+    isCompleted: true,
+    completedDate: new Date()
+  }
+];
 
 const useStyles = makeStyles(theme => ({
   paper: {
@@ -12,37 +24,49 @@ const useStyles = makeStyles(theme => ({
 
 const TodoPage = () => {
   const classes = useStyles();
-  const [todos, setTodos] = React.useState([]);
+  const [isEditing, setIsEditing] = React.useState(false);
   const [activeTodo, setActiveTodo] = React.useState(null);
+  const [todos, dispatch] = React.useReducer(TodoReducer, initialState);
 
-  const onSubmit = values => {
-    const { task_name, isEditing, todoItemIndex } = values;
-    const newTodos = [...todos];
-
-    if (isEditing) {
-      newTodos[todoItemIndex] = { task_name };
-    } else {
-      newTodos.push({ task_name });
+  const onSubmit = formValues => {
+    if (!isEditing) {
+      return dispatch(addTodo(formValues));
     }
 
-    setTodos(newTodos);
+    dispatch(updateTodo(formValues));
+    onCancelEdit();
+  };
+
+  const onCancelEdit = () => {
+    setIsEditing(false);
     setActiveTodo(null);
   };
 
-  const onEditTodoItem = todoItemIndex => {
-    setActiveTodo({ isEditing: true, todoItemIndex, ...todos[todoItemIndex] });
+  const onEditTodoItem = todo => {
+    setIsEditing(true);
+    setActiveTodo(todo);
   };
 
-  const onDeleteTodoItem = todoItemIndex => {
-    setTodos(state => state.filter((_, index) => index !== todoItemIndex));
+  const onDeleteTodoItem = todo => {
+    if (isEditing && todo.id === activeTodo.id) {
+      onCancelEdit();
+    }
+    dispatch(removeTodo(todo));
   };
+
+  const onToggleTodoCompleted = todo => dispatch(toggleTodo(todo));
 
   const TodoArea = props => {
     return (
       <Paper {...props}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
-            <TodoForm onSubmit={onSubmit} preFilledFormState={activeTodo} />
+            <TodoForm
+              onSubmit={onSubmit}
+              onCancelEdit={onCancelEdit}
+              isEditing={isEditing}
+              preFilledFormState={activeTodo}
+            />
           </Grid>
           <Grid item xs={12} md={8}>
             <TodoListArea />
@@ -55,6 +79,7 @@ const TodoPage = () => {
   const TodoListArea = () => (
     <TodoList
       todos={todos}
+      onToggleTodoCompleted={onToggleTodoCompleted}
       onEditTodoItem={onEditTodoItem}
       onDeleteTodoItem={onDeleteTodoItem}
     />
